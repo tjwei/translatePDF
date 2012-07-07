@@ -1,0 +1,26 @@
+可將一些簡體的文字版 PDF 轉成繁體。
+需安裝 pdfrw, opencc, pdftk, chardet, fontTools, droid-sans-fallback.ttf
+fontTools 可用 pip 安裝，其他可用 apt-get 安裝。
+執行方式為 python xxx.pdf
+
+usage: tpdfrw.py [-h] [--opencc-config OPENCC_CONFIG]
+                 [--default-ttf DEFAULT_TTF] [--output-prefix OUTPUT_PREFIX]
+                 input [output]
+
+Translate a PDF file from/to different variations of Chinese language
+
+positional arguments:
+  input                 input pdf file
+  output                output pdf file name (default: None)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --opencc-config OPENCC_CONFIG
+                        opencc config (default: zhs2zhtw_vp.ini)
+  --default-ttf DEFAULT_TTF
+                        default TTF font file name (default:
+                        /usr/share/fonts/truetype/droid/DroidSansFallback.ttf)
+  --output-prefix OUTPUT_PREFIX
+                        default output prefix. Ignored when output file name
+                        is given (default: [translated])
+
