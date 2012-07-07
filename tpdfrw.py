@@ -100,10 +100,9 @@ class TranslatedPdf(object):
             self.pdf=PdfReader(pdfFile, decompress=False)
         except:
             print "Using pdftk to uncompress and decrypt"
-            from subprocess import Popen, PIPE
-            import shlex
-            cmd = 'pdftk %s output - uncompress' % pdfFile
-            proc = Popen(shlex.split(cmd),stdout=PIPE)
+            from subprocess import Popen, PIPE            
+            cmd = ['pdftk', pdfFile, 'output', '-',  'uncompress']
+            proc = Popen(cmd,stdout=PIPE)
             cmdout,cmderr = proc.communicate()
             if cmderr:
                 print "Unable to open", pdfFile
