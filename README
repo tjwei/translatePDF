@@ -24,3 +24,6 @@ optional arguments:
                         default output prefix. Ignored when output file name
                         is given (default: [translated])
 
+
+PyOpenCC.py 是從 opencc source code 裡面拿來的 ctypes wrapper。
+
