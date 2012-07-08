@@ -8,6 +8,16 @@ import argparse
 import os.path
 import sys
 
+# monkey patch, fix bugs of pdfrw
+import re
+PdfString.unescape_dict = {'\\b':'\b', '\\f':'\f', '\\n':'\n',
+                     '\\r':'\r', '\\t':'\t',
+                     '\\\r\n': '', '\\\r':'', '\\\n':'',
+                     '\\\\':'\\', '\\':'', '\\(': '(', '\\)':')'
+                    }
+PdfString.unescape_pattern = r'(\\\)|\\\(|\\b|\\f|\\n|\\r|\\t|\\\r\n|\\\r|\\\n|\\[0-9]+|\\\\)'
+PdfString.unescape_func = re.compile(PdfString.unescape_pattern).split
+
 #Utility for display Chinese font name
 def autoDecode(s):    
     enc=chardet.detect(s)["encoding"]
@@ -86,7 +96,16 @@ def _id(obj, objlist=[]):
             return i
     objlist.append(obj)
     return len(objlist)-1
-        
+
+def transPdfString(v, translator)        :
+    if isinstance(v, PdfString):                    
+        if v[0]=="(":
+            s0=v.decode()
+            if s0.startswith("\xfe\xff"): #chardet.detect(s0)["encoding"]=="UTF-16BE":
+                s1=translator(s0.decode("utf-16be", "ignore"))  
+                s2=PdfString.encode(s1.encode("utf-16be"))                        
+                return PdfString(s2)
+    return None
 TTF_FILE="/usr/share/fonts/truetype/droid/DroidSansFallback.ttf"
 
 class TranslatedPdf(object):
@@ -125,18 +144,27 @@ class TranslatedPdf(object):
             fontfile=font.DescendantFonts[0].FontDescriptor.FontFile2
             writeStream(fontfile, file(TTF_FILE,"rb").read())
             font.ToUnicode=None
-        # translate meta info
+        # translate info
         if self.pdf.has_key("/Info"):
             for k,v in self.pdf.Info.iteritems():
-                if isinstance(v, PdfString):                    
-                    if v[0]=="(":
-                        s0=v[1:-1].decode("string-escape")                        
-                        if chardet.detect(s0)["encoding"]=="UTF-16BE":
-                            s1=translator(s0.decode("utf-16be", "ignore"))                            
-                            s2=PdfString.encode(s1.encode("utf-16be"))                        
-                            self.pdf.Info[k]=PdfString(s2)
-                    
-            
+                tv=transPdfString(v, translator)
+                if tv is not None:
+                    self.pdf.Info[k]=tv                    
+        # translate outlines        
+        if self.pdf.Root.Outlines:
+            array=[]
+            array.append(self.pdf.Root.Outlines.First)
+            while array:
+                x=array.pop()
+                if x.First:
+                    array.append(x.First)
+                if x.Next:
+                    array.append(x.Next)                
+                print autoDecode(x.Title.decode())
+                tTitle=transPdfString(x.Title, translator)
+                if tTitle is not None:
+                    x.Title=tTitle                
+                
     def _updatePageFontDecodeDicts(self, page):
             fonts=page.Resources.Font            
             for k, font in (fonts.iteritems() if fonts else []):                        
@@ -155,6 +183,7 @@ class TranslatedPdf(object):
         #print type(opdf.trailer), type(opdf.trailer.Info), type(opdf.trailer.Info.Author)
         opdf.addpages(self.pdf.pages)        
         opdf.trailer.Info=self.pdf.Info
+        opdf.trailer.Root.Outlines=self.pdf.Root.Outlines
         opdf.write(fname)
 
     def _translatePage(self, page, translator):
