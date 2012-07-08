@@ -32,4 +32,5 @@ PyOpenCC.py 是從 opencc source code 裡面拿來的 ctypes wrapper。
 Blog 文章： http://weijr-note.blogspot.tw/2012/07/pdf.html
 Blog 文章： http://weijr-note.blogspot.tw/2012/07/pdf-github-todo.html
 
+Code License: Apache License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0
 
