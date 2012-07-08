@@ -1,5 +1,5 @@
 import zlib
-from pdfrw import PdfReader, PdfWriter, PdfTokens, PdfString
+from pdfrw import PdfReader, PdfWriter, PdfTokens, PdfString, PdfArray
 import fontTools.ttLib
 import PyOpenCC as opencc
 import chardet
@@ -28,16 +28,26 @@ def autoDecode(s):
 
 # Utility functions for reading/writing pdf stream
 def readStream(obj):
-    if obj.has_key("/Filter"):
-        return zlib.decompress(obj.stream)
-    else:
-        return obj.stream
+    try:
+        if obj.has_key("/Filter"):
+            return zlib.decompress(obj.stream)
+        else:
+            return obj.stream
+    except:
+        print sys.exc_info()
+        print "readStream: The object does not have a stream?", obj
+        return ""
         
 def writeStream(obj, buf):
-    if obj.has_key("/Filter"):
-        obj.stream=zlib.compress(buf)
-    else:
-        obj.stream=buf
+    try:
+        if obj.has_key("/Filter"):
+            obj.stream=zlib.compress(buf)
+        else:
+            obj.stream=buf
+    except:
+        print sys.exc_info()
+        print "writeStream: The object does not have a stream?", obj
+        pass
 
 #Utility function for getting the Decode Dict from a font
 def getFontDecodeDict(font):
@@ -159,8 +169,7 @@ class TranslatedPdf(object):
                 if x.First:
                     array.append(x.First)
                 if x.Next:
-                    array.append(x.Next)                
-                print autoDecode(x.Title.decode())
+                    array.append(x.Next)                                
                 tTitle=transPdfString(x.Title, translator)
                 if tTitle is not None:
                     x.Title=tTitle                
@@ -259,7 +268,7 @@ Ignored when output file name is given""")
     parser.add_argument("output", type=str, nargs="?", help="output pdf file name")
     args=args = parser.parse_args()
     with opencc.OpenCC(args.opencc_config) as cc:
-        translator = lambda x: cc.convert(x.encode("utf8")).decode("utf8")                
+        translator = lambda x: cc.convert(x.encode("utf8")).decode("utf8", "replace")                
         tpdf=TranslatedPdf(args.input, translator, args.default_ttf)
         if args.output is None:
             inputFileName=autoDecode(os.path.basename(args.input)) # to unicode
