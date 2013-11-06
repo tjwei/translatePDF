@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 import zlib
 from pdfrw import PdfReader, PdfWriter, PdfTokens, PdfString, PdfArray
 import fontTools.ttLib
