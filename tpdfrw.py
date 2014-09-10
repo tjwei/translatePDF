@@ -117,7 +117,7 @@ def transPdfString(v, translator)        :
                 s2=PdfString.encode(s1.encode("utf-16be"))                        
                 return PdfString(s2)
     return None
-TTF_FILE="/usr/share/fonts/truetype/droid/DroidSansFallback.ttf"
+TTF_FILE="/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf"
 
 class TranslatedPdf(object):
     def __init__(self, pdfFile, translator, ttfFile=TTF_FILE):
