@@ -4,9 +4,12 @@
 在 ubuntu 上，除了 fontTools 外，其他可用 apt-get 安裝。
 python 的 module 大多可用 pip 安裝。
 fontTools 暫時無法，請到 http://sourceforge.net/projects/fonttools/ 下載安裝。
-(解開後 sudo python2 setup.py install 即可)
+(解開後 `sudo python2 setup.py install` 即可)
 
-執行方式為 python2 tpdfrw.py xxx.pdf
+執行方式為 
+```bash
+python2 tpdfrw.py xxx.pdf
+```
 
 usage: tpdfrw.py [-h] [--opencc-config OPENCC_CONFIG]
                  [--default-ttf DEFAULT_TTF] [--output-prefix OUTPUT_PREFIX]
@@ -29,6 +32,14 @@ optional arguments:
                         default output prefix. Ignored when output file name
                         is given (default: [translated])
 
+因為解碼支援不完整，也可以試試看先
+```bash
+qpdf --qdf --object-streams=disable xxx.pdf xxx-decoded.pdf
+```
+然後再
+```bash
+python2 tpdfrw.py xxx-decoded.pdf
+```
 
 PyOpenCC.py 是從 opencc source code 裡面拿來的 ctypes wrapper。
 
