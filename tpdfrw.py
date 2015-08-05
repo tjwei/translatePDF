@@ -289,7 +289,7 @@ def main():
     parser.add_argument('--opencc-config', type=str, default="zhs2zhtw_vp.ini", 
                         help="opencc config")
     parser.add_argument('--default-ttf', type=str, default=TTF_FILE, 
-                        help="default TTF font file name")
+                        help="default TTF/OTF font file name")
     parser.add_argument('--output-prefix', type=str, default="[translated]", 
                         help="""default output prefix. 
 Ignored when output file name is given""")

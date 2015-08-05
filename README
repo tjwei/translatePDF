@@ -26,7 +26,7 @@ optional arguments:
   --opencc-config OPENCC_CONFIG
                         opencc config (default: zhs2zhtw_vp.ini)
   --default-ttf DEFAULT_TTF
-                        default TTF font file name (default:
+                        default TTF/OTF font file name (default:
                         /usr/share/fonts/truetype/droid/DroidSansFallback.ttf)
   --output-prefix OUTPUT_PREFIX
                         default output prefix. Ignored when output file name
