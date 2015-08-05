@@ -162,7 +162,7 @@ class TranslatedPdf(object):
             self.pdf=PdfReader(StringIO.StringIO(cmdout), decompress=False)
         self.decodeDicts={}
         self.font_list=[]
-        self.dttf=fontTools.ttLib.TTFont(TTF_FILE) # default ttf
+        self.dttf=fontTools.ttLib.TTFont(ttfFile) # default ttf
         if self.dttf['cmap'].getcmap(3,1) is None:        
             cmap10=self.dttf['cmap'].getcmap(3,10).cmap
             cmap={k&0xffff:v for k,v in cmap10.iteritems()}
@@ -175,7 +175,7 @@ class TranslatedPdf(object):
         # translate fonts
         for font in self.font_list:            
             fontfile=font.DescendantFonts[0].FontDescriptor.FontFile2
-            writeStream(fontfile, file(TTF_FILE,"rb").read())
+            writeStream(fontfile, file(ttfFile,"rb").read())
             font.ToUnicode=None
         # translate info
         if self.pdf.has_key("/Info"):
