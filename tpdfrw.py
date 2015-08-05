@@ -10,14 +10,33 @@ import os.path
 import sys
 
 # monkey patch, fix bugs of pdfrw
+# sending pull requset, but will keep this for awhile
 import re
 PdfString.unescape_dict = {'\\b':'\b', '\\f':'\f', '\\n':'\n',
                      '\\r':'\r', '\\t':'\t',
                      '\\\r\n': '', '\\\r':'', '\\\n':'',
                      '\\\\':'\\', '\\':'', '\\(': '(', '\\)':')'
                     }
-PdfString.unescape_pattern = r'(\\\)|\\\(|\\b|\\f|\\n|\\r|\\t|\\\r\n|\\\r|\\\n|\\[0-9]+|\\\\)'
+PdfString.unescape_pattern = r'(\\\)|\\\(|\\b|\\f|\\n|\\r|\\t|\\\r\n|\\\r|\\\n|\\[0-9]{3}|\\\\)'
 PdfString.unescape_func = re.compile(PdfString.unescape_pattern).split
+def decode_regular(self, remap=chr):
+    assert self[0] == '(' and self[-1] == ')'
+    mylist = self.unescape_func(self[1:-1])
+    result = []
+    unescape = self.unescape_dict.get
+    for chunk in mylist:
+        chunk = unescape(chunk, chunk)
+        if chunk.startswith('\\') and len(chunk) > 1:
+            value = int(chunk[1:], 8)
+            # FIXME: TODO: Handle unicode here
+            if value > 255:
+                value = 255
+            chunk = remap(value)
+        if chunk:
+            result.append(chunk)
+    return ''.join(result)
+PdfString.decode_regular = decode_regular
+# end of monkey patch
 
 #Utility for display Chinese font name
 def autoDecode(s):    
@@ -55,7 +74,10 @@ def getFontDecodeDict(font):
     """
                 Only works for font with ToUnicode and DesendantFont...FontFile2
                 This function is a quick ugly function, may not work.
-    """    
+    """
+    print "font", font
+    print "-->", font.DescendantFonts
+    print "-->", font.DescendantFonts[0].FontDescriptor.FontFile2
     # Attempt to use the cmap from FontFile2
     ttfbuf=readStream(font.DescendantFonts[0].FontDescriptor.FontFile2)
     tmpttf=fontTools.ttLib.TTFont(StringIO.StringIO(ttfbuf))
@@ -198,22 +220,28 @@ class TranslatedPdf(object):
 
     def _translatePage(self, page, translator):
         def handleText(encoded_text, decodeDict):
-            if not decodeDict: 
+            if not decodeDict:
                 return encoded_text #unable to decode the text
-            if encoded_text[0]!='<': # Unhandled case, never happend
-                print encoded_text[:]
+            if encoded_text[0] not in '(<': # Unhandled case
+                print "unhandled case", encoded_text[:]
                 return encoded_text
             b=encoded_text.decode()
             utext0=u""
-            b0=b            
-            while len(b):
-                code = ord(b[0])*256+ord(b[1]) if len(b)>1 else ord(b[0])
+            b0 = b
+            idx = 0
+            while idx < len(b):
+                if encoded_text[0] == '(':
+                    #code = ord(b[idx])
+                    code = ord(b[idx])*256+ord(b[idx+1]) if idx+1 < len(b) else ord(b[idx])
+                    idx += 2
+                else: # encoded_text[0] == '<':
+                    code = ord(b[idx])*256+ord(b[idx+1]) if idx+1 < len(b) else ord(b[idx])
+                    idx += 2
                 if decodeDict.has_key(code):
                     utext0 += decodeDict[code]
                 else:
                     utext0 += "??"
-                    print "\n??", hex(code), [hex(ord(x)) for x in str(b0)]                    
-                b=b[2:]
+                    print "\n??", hex(code), [hex(ord(x)) for x in str(b0)]
             utext=translator(utext0)                
             gid_array=[]
             for x in utext:
