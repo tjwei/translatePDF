@@ -47,10 +47,17 @@ def autoDecode(s):
         return s
 
 # Utility functions for reading/writing pdf stream
+def inflate(data):
+    decompress = zlib.decompressobj(
+            -zlib.MAX_WBITS  # see above
+    )
+    inflated = decompress.decompress(data)
+    inflated += decompress.flush()
+    return inflated
 def readStream(obj):
     try:
         if obj.has_key("/Filter"):
-            return zlib.decompress(obj.stream)
+            return zlib.decompress(obj.stream, -zlib.MAX_WBITS)
         else:
             return obj.stream
     except:
@@ -173,9 +180,13 @@ class TranslatedPdf(object):
             print "Translating p", n , "\r",
             self._translatePage(page, translator)
         # translate fonts
-        for font in self.font_list:            
-            fontfile=font.DescendantFonts[0].FontDescriptor.FontFile2
-            writeStream(fontfile, file(ttfFile,"rb").read())
+        fontfile = None
+        for font in self.font_list:
+            if fontfile is None:
+                fontfile=font.DescendantFonts[0].FontDescriptor.FontFile2
+                writeStream(fontfile, file(ttfFile,"rb").read())
+            else:
+                font.DescendantFonts[0].FontDescriptor.FontFile2 = fontfile
             font.ToUnicode=None
         # translate info
         if self.pdf.has_key("/Info"):
@@ -220,6 +231,7 @@ class TranslatedPdf(object):
 
     def _translatePage(self, page, translator):
         def handleText(encoded_text, decodeDict):
+            print "handle", encoded_text
             if not decodeDict:
                 return encoded_text #unable to decode the text
             if encoded_text[0] not in '(<': # Unhandled case
